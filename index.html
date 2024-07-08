@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jsonl 만들기</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/lib/codemirror.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/addon/hint/show-hint.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material-darker.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/foldgutter.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/dialog/dialog.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/lib/codemirror.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/mode/clike/clike.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/fold/foldcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/fold/foldgutter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/fold/brace-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/search/search.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/dialog/dialog.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/anyword-hint.min.js"></script>
+    <style>
+        body {
+            font-family: 'Pretendard', Arial, sans-serif;
+            margin: 20px;
+            background-color: #141414;
+            color: #ddd;
+            display: flex;
+            justify-content: space-between;
+        }
+        .container {
+            width: 48%;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #1e1e1e;
+            color: #ddd;
+            border: 1px solid #444;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        textarea {
+            resize: vertical;
+        }
+        .CodeMirror {
+            background-color: #1e1e1e;
+            color: #ddd;
+            border: 1px solid #444;
+            font-family: 'Courier New', Courier, monospace;
+            height: auto;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4265E3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #3355d0;
+        }
+        .qa-pair {
+            background-color: #333333;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .remove-btn, .edit-btn, .toggle-btn {
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 5px 10px;
+            margin-left: 5px;
+        }
+        .remove-btn {
+            background-color: #e34c4c;
+        }
+        .remove-btn:hover {
+            background-color: #d03a3a;
+        }
+        .edit-btn {
+            background-color: #4265E3;
+        }
+        .edit-btn:hover {
+            background-color: #3355d0;
+        }
+        .toggle-btn {
+            background-color: #888;
+        }
+        .toggle-btn:hover {
+            background-color: #666;
+        }
+        .qa-display {
+            white-space: pre-wrap;
+            display: none;
+            flex-grow: 1;
+        }
+        .buttons {
+            display: flex;
+            justify-content: flex-start;
+            gap: 10px;
+            margin-left: 10px;
+        }
+        .button-container {
+            display: flex;
+            align-items: center;
+        }
+        .qa-list {
+            max-height: 600px; /* Adjust as necessary */
+            overflow-y: auto;
+        }
+        .highlight {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TUNER</h1>
+        <input type="file" id="fileInput">
+        <button onclick="loadJSONL()">불러오기</button>
+        <h3>입력 - 설명</h3>
+        <textarea id="question_desc" rows="4" placeholder="Enter the question description"></textarea>
+        <h3>입력 - 코드</h3>
+        <textarea id="question_code" rows="4" placeholder="Enter the question code"></textarea>
+        <h3>출력 - 설명</h3>
+        <textarea id="answer_desc" rows="4" placeholder="Enter the answer description"></textarea>
+        <h3>출력 - 코드</h3>
+        <textarea id="answer_code" rows="4" placeholder="Enter the answer code"></textarea>
+        <h3>태그</h3>
+        <input type="text" id="tags" placeholder="Enter tags separated by spaces, e.g., #tag1 #tag2">
+        <button onclick="addQAPair()">추가</button>
+        <button onclick="saveToJSONL()">저장</button>
+        
+    </div> 
+    <div class="container">
+        <h2>니가 만든거</h2>
+        <h3>번호/태그 검색</h3>
+        <input type="text" id="searchQuery" placeholder="Enter number or tag to search">
+        <button onclick="search()">검색</button>
+        <div id="qa-pairs" class="qa-list"></div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/fold/foldcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/fold/foldgutter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/fold/brace-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/search/search.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/dialog/dialog.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/anyword-hint.min.js"></script>
+    <script>
+        let qaPairs = [];
+        let editIndex = -1;
+
+        const questionCodeMirror = CodeMirror.fromTextArea(document.getElementById('question_code'), {
+            lineNumbers: true,
+            mode: "text/x-csrc",
+            theme: "material-darker",
+            foldGutter: true,
+            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+            extraKeys: {"Ctrl-Space": "autocomplete"}
+        });
+
+        const answerCodeMirror = CodeMirror.fromTextArea(document.getElementById('answer_code'), {
+            lineNumbers: true,
+            mode: "text/x-csrc",
+            theme: "material-darker",
+            foldGutter: true,
+            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+            extraKeys: {"Ctrl-Space": "autocomplete"}
+        });
+
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const contents = e.target.result.split('\n').filter(line => line.trim() !== '');
+                    qaPairs = contents.map(line => JSON.parse(line));
+                    displayQAPairs();
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function addQAPair() {
+            const questionDesc = document.getElementById('question_desc').value;
+            const questionCode = questionCodeMirror.getValue();
+            const answerDesc = document.getElementById('answer_desc').value;
+            const answerCode = answerCodeMirror.getValue();
+            const tags = document.getElementById('tags').value.trim().split(/\s+/).filter(tag => tag.startsWith('#'));
+
+            const newQAPair = {
+                prompt: `${questionDesc}\n\`\`\`\n${questionCode}\n\`\`\``,
+                completion: `${answerDesc}\n\`\`\`\n${answerCode}\n\`\`\``,
+                tags: tags
+            };
+
+            if (questionDesc && answerDesc) {
+                if (editIndex === -1) {
+                    qaPairs.push(newQAPair);
+                } else {
+                    qaPairs[editIndex] = newQAPair;
+                    editIndex = -1;
+                }
+                displayQAPairs();
+                clearInputs();
+            } else {
+                alert('Please enter all required fields.');
+            }
+        }
+
+        function editQAPair(index) {
+            const pair = qaPairs[index];
+            const [questionDesc, questionCode] = pair.prompt.split('\n```');
+            const [answerDesc, answerCode] = pair.completion.split('\n```');
+
+            document.getElementById('question_desc').value = questionDesc.trim();
+            questionCodeMirror.setValue(questionCode.trim());
+            document.getElementById('answer_desc').value = answerDesc.trim();
+            answerCodeMirror.setValue(answerCode.trim());
+            document.getElementById('tags').value = pair.tags.join(' ');
+
+            editIndex = index;
+        }
+
+        function removeQAPair(index) {
+            qaPairs.splice(index, 1);
+            displayQAPairs();
+        }
+
+        function toggleQAPair(index) {
+            const qaDisplay = document.getElementById(`qa-display-${index}`);
+            const isHidden = qaDisplay.style.display === 'none';
+            qaDisplay.style.display = isHidden ? 'block' : 'none';
+        }
+
+        function displayQAPairs() {
+            const qaPairsDiv = document.getElementById('qa-pairs');
+            qaPairsDiv.innerHTML = '';
+            qaPairs.forEach((pair, index) => {
+                const div = document.createElement('div');
+                div.className = 'qa-pair';
+                div.id = `qa-pair-${index}`;
+                div.innerHTML = `<div class="qa-display" id="qa-display-${index}"><strong>${index + 1}. Q : 설명 :</strong><br>${pair.prompt.split('\n```')[0]}
+                                 <br><strong>Q : 코드 :</strong><pre><code>${pair.prompt.split('\n```')[1]}</code></pre>
+                                 <br><strong>A : 설명 :</strong><br>${pair.completion.split('\n```')[0]}
+                                 <br><strong>A : 코드 :</strong><pre><code>${pair.completion.split('\n```')[1]}</code></pre>
+                                 <br><strong>태그 :</strong><span> ${pair.tags.join(' ')}</div>
+                                 <div class="button-container">
+                                    <span>${index + 1} ${pair.tags.join(' ')}</span>
+                                    <div class="buttons">
+                                        <button class="toggle-btn" onclick="toggleQAPair(${index})">펼치기/접기</button>
+                                        <button class="edit-btn" onclick="editQAPair(${index})">편집</button>
+                                        <button class="remove-btn" onclick="removeQAPair(${index})">제거</button>
+                                    </div>
+                                 </div>`;
+                qaPairsDiv.appendChild(div);
+            });
+        }
+
+        function saveToJSONL() {
+            if (qaPairs.length === 0) {
+                alert('없다 이 새키야');
+                return;
+            }
+            const blob = new Blob(qaPairs.map(pair => JSON.stringify(pair) + '\n'), { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'qa_pairs.jsonl';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearInputs() {
+            document.getElementById('question_desc').value = '';
+            questionCodeMirror.setValue('');
+            document.getElementById('answer_desc').value = '';
+            answerCodeMirror.setValue('');
+            document.getElementById('tags').value = '';
+        }
+
+        function search() {
+            const searchQuery = document.getElementById('searchQuery').value.trim();
+            document.querySelectorAll('.qa-pair').forEach(pair => pair.classList.remove('highlight'));
+
+            if (searchQuery.startsWith('#')) {
+                // 태그 검색
+                qaPairs.forEach((pair, index) => {
+                    if (pair.tags.includes(searchQuery)) {
+                        const pairToHighlight = document.getElementById(`qa-pair-${index}`);
+                        pairToHighlight.classList.add('highlight');
+                        pairToHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+            } else {
+                // 번호 검색
+                const searchNumber = parseInt(searchQuery);
+                if (!isNaN(searchNumber) && searchNumber > 0 && searchNumber <= qaPairs.length) {
+                    const pairToHighlight = document.getElementById(`qa-pair-${searchNumber - 1}`);
+                    pairToHighlight.classList.add('highlight');
+                    pairToHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    alert('유효한 번호를 입력하세요.');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
